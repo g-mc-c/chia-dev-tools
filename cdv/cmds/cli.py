@@ -45,8 +45,8 @@ def cli(ctx: click.Context) -> None:
     ctx.ensure_object(dict)
 
 
-@cli.command("test", short_help="Run the local test suite (located in ./cdv_tests)")
-@click.argument("tests", default="./cdv_tests", required=False)
+@cli.command("test", short_help="Run the local test suite (located in ./tests)")
+@click.argument("tests", default="./tests", required=False)
 @click.option(
     "-d",
     "--discover",
@@ -62,9 +62,9 @@ def cli(ctx: click.Context) -> None:
 def test_cmd(tests: str, discover: bool, init: str):
     test_paths: List[str] = list(map(lambda e: str(e), Path.cwd().glob(tests)))
     if init:
-        test_dir = Path(os.getcwd()).joinpath("cdv_tests")
+        test_dir = Path(os.getcwd()).joinpath("tests")
         if not test_dir.exists():
-            os.mkdir("cdv_tests")
+            os.mkdir("tests")
 
         import cdv.test as testlib
 

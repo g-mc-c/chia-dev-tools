@@ -45,7 +45,7 @@ class TestCdvCommands:
         with runner.isolated_filesystem():
             result: Result = runner.invoke(cli, ["test", "--init"])
             assert result.exit_code == 0
-            assert Path("./cdv_tests").exists() and Path("./cdv_tests/test_skeleton.py").exists()
+            assert Path("./tests").exists() and Path("./tests/test_skeleton.py").exists()
 
             result = runner.invoke(cli, ["test", "--discover"])
             assert result.exit_code == 0
