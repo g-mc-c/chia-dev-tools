@@ -48,7 +48,7 @@ Commands:
   encode   Encode a puzzle hash to a bech32m address
   inspect  Inspect various data structures
   rpc      Make RPC requests to a Chia full node
-  test     Run the local test suite (located in ./tests)
+  test     Run the local test suite (located in ./cdv_tests)
 ```
 
 Tests
@@ -58,7 +58,7 @@ The test command allows you to initialize and run local tests.
 
 ```
 cdv test --init
-# Make changes to the ./tests/test_skeleton.py file
+# Make changes to the ./cdv_tests/test_skeleton.py file
 cdv test
 ```
 
