@@ -676,8 +676,8 @@ def do_inspect_keys_cmd(ctx: click.Context, print_results: bool = True, **kwargs
 
             if kwargs["synthetic"]:
                 if sk:
-                    sk = calculate_synthetic_secret_key(sk, bytes32(hexstr_to_bytes(kwargs["hidden_puzhash"])))
-                pk = calculate_synthetic_public_key(pk, bytes32(hexstr_to_bytes(kwargs["hidden_puzhash"])))
+                    sk = calculate_synthetic_secret_key(sk, bytes32.from_hexstr((hexstr_to_bytes(kwargs["hidden_puzhash"]))))
+                pk = calculate_synthetic_public_key(pk, bytes32.from_hexstr((hexstr_to_bytes(kwargs["hidden_puzhash"]))))
         else:
             print("Invalid arguments specified.")
 
