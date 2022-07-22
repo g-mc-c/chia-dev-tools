@@ -9,8 +9,7 @@ from clvm_tools.clvmc import compile_clvm_text
 
 # This is do trick inspect commands into thinking they're commands
 def fake_context() -> Dict:
-    ctx = {}
-    ctx["obj"] = {"json": True}
+    ctx = {"obj": {"json": True}}
     return ctx
 
 
