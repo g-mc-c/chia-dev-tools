@@ -197,7 +197,7 @@ async def generate_plots(config: Dict[str, Any], root_path: Path, fingerprint: i
     """
     Pre-Generate plots for the new simulator instance.
     """
-    from tests.simulator.block_tools import BlockTools, test_constants
+    from chia.simulator.block_tools import BlockTools, test_constants
     from chia.simulator.start_simulator import PLOTS, PLOT_SIZE
     from time import time
 
