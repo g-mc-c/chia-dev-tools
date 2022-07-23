@@ -271,7 +271,11 @@ def rpc_mempool_cmd(transaction_id: str, ids_only: bool):
         try:
             node_client: FullNodeRpcClient = await get_client()
             if transaction_id:
-                items = {transaction_id: await node_client.get_mempool_item_by_tx_id(bytes32.from_bytes(hexstr_to_bytes(transaction_id)))}
+                items = {
+                    transaction_id: await node_client.get_mempool_item_by_tx_id(
+                        bytes32.from_bytes(hexstr_to_bytes(transaction_id))
+                    )
+                }
             else:
                 b_items: Dict = await node_client.get_all_mempool_items()
                 items = {}
