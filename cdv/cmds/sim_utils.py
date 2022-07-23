@@ -385,7 +385,7 @@ async def farm_blocks(
 async def set_auto_farm(node_client: SimulatorFullNodeRpcClient, _config: Dict, set_autofarm: bool) -> None:
     current = await node_client.get_auto_farming()
     if current == set_autofarm:
-        print(f"Auto farming is already {'enabled' if set_autofarm else 'disabled'}")
+        print(f"Auto farming is already {'on' if set_autofarm else 'off'}")
         return
     result = await node_client.set_auto_farming(set_autofarm)
-    print(f"Auto farming is now {'enabled' if result else 'disabled'}")
+    print(f"Auto farming is now {'on' if result else 'off'}")

@@ -153,14 +153,18 @@ def farm_cmd(ctx: click.Context, blocks: int, transaction: bool, target_address:
 
 
 @sim_cmd.command("autofarm", short_help="Enable or disable auto farming on transaction submission")
-@click.option("-s", "--set_autofarm", type=bool, required=True, help="Enable or disable auto farming.")
+@click.argument("set_autofarm", type=click.Choice(["on", "off"]), nargs=1, required=True)
 @click.pass_context
-def autofarm_cmd(ctx: click.Context, set_autofarm: Optional[bool]) -> None:
+def autofarm_cmd(ctx: click.Context, set_autofarm: str) -> None:
+    if set_autofarm == "on":
+        autofarm = True
+    else:
+        autofarm = False
     asyncio.run(
         execute_with_simulator(
             ctx.obj["rpc_port"],
             ctx.obj["root_path"],
             set_auto_farm,
-            set_autofarm,
+            autofarm,
         )
     )
