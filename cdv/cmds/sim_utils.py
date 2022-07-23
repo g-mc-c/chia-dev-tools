@@ -1,18 +1,17 @@
 import os
 from decimal import Decimal
 from pathlib import Path
-from typing import Callable, Dict, Optional, Any, List
+from typing import Any, Callable, Dict, List, Optional
 
+from blspy import PrivateKey
 from chia.consensus.coinbase import create_puzzlehash_for_pk
 from chia.simulator.SimulatorFullNodeRpcClient import SimulatorFullNodeRpcClient
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.types.coin_record import CoinRecord
-from chia.util.bech32m import encode_puzzle_hash, decode_puzzle_hash
-from chia.util.config import save_config, load_config
+from chia.util.bech32m import decode_puzzle_hash, encode_puzzle_hash
+from chia.util.config import load_config, save_config
 from chia.util.ints import uint32
-from blspy import PrivateKey
-from chia.util.keychain import Keychain
-from chia.util.keychain import bytes_to_mnemonic
+from chia.util.keychain import Keychain, bytes_to_mnemonic
 from chia.wallet.derive_keys import (
     master_sk_to_farmer_sk,
     master_sk_to_pool_sk,
@@ -199,9 +198,10 @@ async def generate_plots(config: Dict[str, Any], root_path: Path, fingerprint: i
     """
     Pre-Generate plots for the new simulator instance.
     """
-    from chia.simulator.block_tools import BlockTools, test_constants
-    from chia.simulator.start_simulator import PLOTS, PLOT_SIZE
     from time import time
+
+    from chia.simulator.block_tools import BlockTools, test_constants
+    from chia.simulator.start_simulator import PLOT_SIZE, PLOTS
 
     farming_puzzle_hash = decode_puzzle_hash(config["simulator"]["farming_address"])
 
@@ -270,8 +270,9 @@ async def print_coin_records(
     include_reward_coins: bool,
     include_spent: bool = False,
 ) -> None:
-    from chia.cmds.units import units
     import sys
+
+    from chia.cmds.units import units
 
     coin_records: List[CoinRecord] = await node_client.get_all_coins(include_spent)
     coin_records = [coin_record for coin_record in coin_records if not coin_record.coinbase or include_reward_coins]

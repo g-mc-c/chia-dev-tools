@@ -6,11 +6,11 @@ from chia.util.config import load_config
 
 from cdv.cmds.sim_utils import (
     SIMULATOR_ROOT_PATH,
+    async_config_wizard,
     execute_with_simulator,
     farm_blocks,
-    set_auto_farm,
     print_status,
-    async_config_wizard,
+    set_auto_farm,
 )
 
 """
@@ -73,8 +73,9 @@ def create_simulator_config(
 @click.argument("group", type=click.Choice(list(all_groups.keys())), nargs=-1, required=True)
 @click.pass_context
 def start_cmd(ctx: click.Context, restart: bool, group: str) -> None:
-    from chia.cmds.start_funcs import async_start
     import sys
+
+    from chia.cmds.start_funcs import async_start
 
     sys.argv[0] = sys.argv[0].replace("cdv", "chia")  # this is the best way I swear.
     config = load_config(ctx.obj["root_path"], "config.yaml")
@@ -87,6 +88,7 @@ def start_cmd(ctx: click.Context, restart: bool, group: str) -> None:
 @click.pass_context
 def stop_cmd(ctx: click.Context, daemon: bool, group: str) -> None:
     import sys
+
     from chia.cmds.stop import async_stop
 
     config = load_config(ctx.obj["root_path"], "config.yaml")
