@@ -1,10 +1,12 @@
 import os
+from decimal import Decimal
 from pathlib import Path
-from typing import Callable, Dict, Optional, Any
+from typing import Callable, Dict, Optional, Any, List
 
 from chia.consensus.coinbase import create_puzzlehash_for_pk
 from chia.simulator.SimulatorFullNodeRpcClient import SimulatorFullNodeRpcClient
 from chia.types.blockchain_format.sized_bytes import bytes32
+from chia.types.coin_record import CoinRecord
 from chia.util.bech32m import encode_puzzle_hash, decode_puzzle_hash
 from chia.util.config import save_config, load_config
 from chia.util.ints import uint32
@@ -167,7 +169,7 @@ def select_fingerprint(fingerprint: int = None) -> Optional[int]:
             " Otherwise, select any key below."
         )
         for i, fp in enumerate(fingerprints):
-            row: str = f"{i+1}) "
+            row: str = f"{i + 1}) "
             row += f"{fp}"
             print(row)
         val = None
@@ -243,10 +245,71 @@ async def async_config_wizard(
     print("Please run 'cdv sim start simulator' to start the simulator.")
 
 
+def print_coin_record(
+    name: str,
+    address_prefix: str,
+    mojo_per_unit: int,
+    coin_record: CoinRecord,
+) -> None:
+    from datetime import datetime
+
+    chia_amount = Decimal(int(coin_record.coin.amount)) / mojo_per_unit
+    coin_address = encode_puzzle_hash(coin_record.coin.puzzle_hash, address_prefix)
+    confirmed_block = coin_record.confirmed_block_index
+    print(f"Coin 0x{coin_record.name.hex()}")
+    print(f"Wallet Address: {coin_address}")
+    print(
+        "Status: "
+        f"{f'Confirmed at block: {confirmed_block}' if coin_record.confirmed_block_index != 0 else 'Not Found'}"
+    )
+    print(f"Spent: {f'at Block {coin_record.spent_block_index}' if not coin_record.spent else 'No'}")
+    print(f"Coin Amount: {chia_amount} {name}")
+    print(f"Parent Coin ID: 0x{coin_record.coin.parent_coin_info.hex()}")
+    print("Created at:", datetime.fromtimestamp(float(coin_record.timestamp)).strftime("%Y-%m-%d %H:%M:%S"))
+    print("")
+
+
+async def print_coin_records(
+    config: Dict[str, Any], node_client: SimulatorFullNodeRpcClient, include_spent: bool = False
+) -> None:
+    from chia.cmds.units import units
+    import sys
+
+    coin_records: List[CoinRecord] = await node_client.get_all_coins(include_spent)
+    paginate = False  # I might change this later.
+    if len(coin_records) != 0:
+        if paginate is True:
+            paginate = sys.stdout.isatty()
+        address_prefix = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"]
+        name = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"].upper()
+        mojo_per_unit = units["chia"]
+        num_per_screen = 5 if paginate else len(coin_records)
+
+        for i in range(0, len(coin_records), num_per_screen):
+            for j in range(0, num_per_screen):
+                if i + j >= len(coin_records):
+                    break
+                print_coin_record(
+                    coin_record=coin_records[i + j],
+                    name=name,
+                    address_prefix=address_prefix,
+                    mojo_per_unit=mojo_per_unit,
+                )
+            if i + num_per_screen <= len(coin_records) and paginate:
+                print("Press q to quit, or c to continue")
+                while True:
+                    entered_key = sys.stdin.read(1)
+                    if entered_key == "q":
+                        return None
+                    elif entered_key == "c":
+                        break
+
+
 async def print_status(
     node_client: SimulatorFullNodeRpcClient,
     config: Dict,
     fingerprint: Optional[int],
+    show_key: bool,
     show_coins: bool,
     show_puzzles: bool,
 ) -> None:
@@ -254,15 +317,16 @@ async def print_status(
     from chia.cmds.units import units
 
     # Display keychain info
-    if fingerprint is None:
-        fingerprint = config["simulator"]["key_fingerprint"]
-    if fingerprint is not None:
-        display_key_info(fingerprint)
-    else:
-        print(
-            "No fingerprint in config, either rerun 'cdv sim create' "
-            "or use --fingerprint to specify one, skipping key information."
-        )
+    if show_key:
+        if fingerprint is None:
+            fingerprint = config["simulator"]["key_fingerprint"]
+        if fingerprint is not None:
+            display_key_info(fingerprint)
+        else:
+            print(
+                "No fingerprint in config, either rerun 'cdv sim create' "
+                "or use --fingerprint to specify one, skipping key information."
+            )
     # chain status ( basically chia show -s)
     await print_blockchain_state(node_client, config)
     print("")
@@ -272,14 +336,15 @@ async def print_status(
     print(
         f"Current Farming address: {encode_puzzle_hash(target_ph, 'txch')}, "
         f"with a balance of: "
-        f"{sum(coin_records.coin.amount for coin_records in farming_coin_records)/ units['chia']} TXCH."
+        f"{sum(coin_records.coin.amount for coin_records in farming_coin_records) / units['chia']} TXCH."
     )
     if show_puzzles:
+        print("All Addresses: ")
         raise ValueError("This command is not yet implemented.")
-        # TODO: get balances of all addresses with a balance on the chain (Probably needs new rpc call)
+        print("")
     if show_coins:
-        raise ValueError("This command is not yet implemented.")
-        # TODO: Show all non spent coins (Need new RPC)
+        print("All Coins: ")
+        await print_coin_records(config, node_client)
 
 
 async def farm_blocks(

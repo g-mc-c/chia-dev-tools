@@ -95,18 +95,24 @@ def stop_cmd(ctx: click.Context, daemon: bool, group: str) -> None:
 
 @sim_cmd.command("status", short_help="Get information about the state of the simulator.")
 @click.option("-f", "--fingerprint", type=int, help="Get detailed information on this fingerprint.")
-@click.option("-s", "--show_coins", type=bool, is_flag=True, default=False, help="Show all unspent coins.")
-@click.option("-p", "--show_puzzles", type=bool, is_flag=True, default=True, help="Show the balances of all puzzles.")
+@click.option("-k", "--show_key", type=bool, is_flag=True, default=False, help="Show detailed key information.")
+@click.option("-c", "--show_coins", type=bool, is_flag=True, default=False, help="Show all unspent coins.")
+@click.option(
+    "-a", "--show_addresses", type=bool, is_flag=True, default=False, help="Show the balances of all addresses."
+)
 @click.pass_context
-def status_cmd(ctx: click.Context, fingerprint: Optional[int], show_coins: bool, show_puzzles: bool) -> None:
+def status_cmd(
+    ctx: click.Context, fingerprint: Optional[int], show_key: bool, show_coins: bool, show_addresses: bool
+) -> None:
     asyncio.run(
         execute_with_simulator(
             ctx.obj["rpc_port"],
             ctx.obj["root_path"],
             print_status,
             fingerprint,
+            show_key,
             show_coins,
-            show_puzzles,
+            show_addresses,
         )
     )
 
