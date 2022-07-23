@@ -255,36 +255,36 @@ def print_coin_record(
 
     chia_amount = Decimal(int(coin_record.coin.amount)) / mojo_per_unit
     coin_address = encode_puzzle_hash(coin_record.coin.puzzle_hash, address_prefix)
-    confirmed_block = coin_record.confirmed_block_index
     print(f"Coin 0x{coin_record.name.hex()}")
     print(f"Wallet Address: {coin_address}")
-    print(
-        "Status: "
-        f"{f'Confirmed at block: {confirmed_block}' if coin_record.confirmed_block_index != 0 else 'Not Found'}"
-    )
-    print(f"Spent: {f'at Block {coin_record.spent_block_index}' if not coin_record.spent else 'No'}")
+    print(f"Confirmed at block: {coin_record.confirmed_block_index}")
+    print(f"Spent: {f'at Block {coin_record.spent_block_index}' if coin_record.spent else 'No'}")
     print(f"Coin Amount: {chia_amount} {name}")
     print(f"Parent Coin ID: 0x{coin_record.coin.parent_coin_info.hex()}")
-    print("Created at:", datetime.fromtimestamp(float(coin_record.timestamp)).strftime("%Y-%m-%d %H:%M:%S"))
-    print("")
+    print(f"Created at: {datetime.fromtimestamp(float(coin_record.timestamp)).strftime('%Y-%m-%d %H:%M:%S')}\n")
 
 
 async def print_coin_records(
-    config: Dict[str, Any], node_client: SimulatorFullNodeRpcClient, include_spent: bool = False
+    config: Dict[str, Any],
+    node_client: SimulatorFullNodeRpcClient,
+    include_reward_coins: bool,
+    include_spent: bool = False,
 ) -> None:
     from chia.cmds.units import units
     import sys
 
     coin_records: List[CoinRecord] = await node_client.get_all_coins(include_spent)
+    coin_records = [coin_record for coin_record in coin_records if not coin_record.coinbase or include_reward_coins]
     paginate = False  # I might change this later.
     if len(coin_records) != 0:
+        print("All Coins: ")
         if paginate is True:
             paginate = sys.stdout.isatty()
         address_prefix = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"]
         name = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"].upper()
         mojo_per_unit = units["chia"]
         num_per_screen = 5 if paginate else len(coin_records)
-
+        # ripped from cmds/wallet_funcs.
         for i in range(0, len(coin_records), num_per_screen):
             for j in range(0, num_per_screen):
                 if i + j >= len(coin_records):
@@ -305,13 +305,27 @@ async def print_coin_records(
                         break
 
 
+async def print_wallets(config: Dict[str, Any], node_client: SimulatorFullNodeRpcClient) -> None:
+    from chia.cmds.units import units
+
+    ph_and_amount = await node_client.get_all_puzzle_hashes()
+    address_prefix = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"]
+    name = config["network_overrides"]["config"][config["selected_network"]]["address_prefix"].upper()
+    mojo_per_unit = units["chia"]
+    for puzzle_hash, amount in ph_and_amount.items():
+        address = encode_puzzle_hash(puzzle_hash, address_prefix)
+        chia_amount = Decimal(int(amount)) / mojo_per_unit
+        print(f"Address: {address} Has a balance of: {chia_amount} {name}.\n")
+
+
 async def print_status(
     node_client: SimulatorFullNodeRpcClient,
     config: Dict,
     fingerprint: Optional[int],
     show_key: bool,
     show_coins: bool,
-    show_puzzles: bool,
+    include_reward_coins: bool,
+    show_addresses: bool,
 ) -> None:
     from chia.cmds.show import print_blockchain_state
     from chia.cmds.units import units
@@ -338,13 +352,11 @@ async def print_status(
         f"with a balance of: "
         f"{sum(coin_records.coin.amount for coin_records in farming_coin_records) / units['chia']} TXCH."
     )
-    if show_puzzles:
+    if show_addresses:
         print("All Addresses: ")
-        raise ValueError("This command is not yet implemented.")
-        print("")
+        await print_wallets(config, node_client)
     if show_coins:
-        print("All Coins: ")
-        await print_coin_records(config, node_client)
+        await print_coin_records(config, node_client, include_reward_coins)
 
 
 async def farm_blocks(

@@ -97,12 +97,18 @@ def stop_cmd(ctx: click.Context, daemon: bool, group: str) -> None:
 @click.option("-f", "--fingerprint", type=int, help="Get detailed information on this fingerprint.")
 @click.option("-k", "--show_key", type=bool, is_flag=True, default=False, help="Show detailed key information.")
 @click.option("-c", "--show_coins", type=bool, is_flag=True, default=False, help="Show all unspent coins.")
+@click.option("-i", "--include_rewards", type=bool, is_flag=True, default=False, help="Should show rewards coins?")
 @click.option(
     "-a", "--show_addresses", type=bool, is_flag=True, default=False, help="Show the balances of all addresses."
 )
 @click.pass_context
 def status_cmd(
-    ctx: click.Context, fingerprint: Optional[int], show_key: bool, show_coins: bool, show_addresses: bool
+    ctx: click.Context,
+    fingerprint: Optional[int],
+    show_key: bool,
+    show_coins: bool,
+    include_rewards: bool,
+    show_addresses: bool,
 ) -> None:
     asyncio.run(
         execute_with_simulator(
@@ -112,6 +118,7 @@ def status_cmd(
             fingerprint,
             show_key,
             show_coins,
+            include_rewards,
             show_addresses,
         )
     )
