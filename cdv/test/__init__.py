@@ -68,7 +68,6 @@ class CoinWrapper(Coin):
         """Return the program that unlocks this coin"""
         return self.source
 
-
     def smart_coin(self) -> "SmartCoinWrapper":
         """Return a smart coin object wrapping this coin's program"""
         return SmartCoinWrapper(DEFAULT_CONSTANTS.GENESIS_CHALLENGE, self.source)
@@ -392,7 +391,9 @@ class Wallet:
 
         # We receive a timeline of actions to take (indicating that we have a plan)
         # Do the first action and start over.
-        result: Optional[SpendResult] = await self.combine_coins([CoinWrapper(coin.parent_coin_info, coin.amount, self.puzzle) for coin in coins_to_spend])
+        result: Optional[SpendResult] = await self.combine_coins(
+            [CoinWrapper(coin.parent_coin_info, coin.amount, self.puzzle) for coin in coins_to_spend]
+        )
 
         if result is None:
             return None
