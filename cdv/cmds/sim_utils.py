@@ -328,7 +328,7 @@ async def print_status(
     include_reward_coins: bool,
     show_addresses: bool,
 ) -> None:
-    from chia.cmds.show import print_blockchain_state
+    from chia.cmds.show_funcs import print_blockchain_state
     from chia.cmds.units import units
 
     # Display keychain info

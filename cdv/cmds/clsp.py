@@ -164,14 +164,17 @@ def cat_puzzle_hash(inner_puzzlehash: str, tail_hash: str):
 
     try:
         # User passed in a hex puzzlehash
-        inner_puzzlehash_bytes32: bytes32 = bytes32.from_hexstr(inner_puzzlehash)
+        inner_puzzlehash_bytes32_nb: bytes32 = bytes32.from_hexstr(inner_puzzlehash)
         output_bech32m = False
     except ValueError:
         # If that failed, we're dealing with a bech32m inner puzzlehash.
-        inner_puzzlehash_bytes32: bytes32 = decode_puzzle_hash(inner_puzzlehash)
+        inner_puzzlehash_bytes32_bech: bytes32 = decode_puzzle_hash(inner_puzzlehash)
         prefix = inner_puzzlehash[: inner_puzzlehash.rfind("1")]
         output_bech32m = True
-
+    if output_bech32m:
+        inner_puzzlehash_bytes32: bytes32 = inner_puzzlehash_bytes32_bech
+    else:
+        inner_puzzlehash_bytes32 = inner_puzzlehash_bytes32_nb
     # get_tree_hash supports a special "already hashed" list. We're supposed to
     # curry in the full inner puzzle into CAT_MOD, but we only have its hash.
     # We can still compute the treehash similarly to how the CAT puzzle does it

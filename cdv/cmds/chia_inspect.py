@@ -88,18 +88,6 @@ def json_and_key_strip(input: str) -> Dict:
         return json_dict
 
 
-# Utility function for maintaining compatibility with Chia 1.2.11
-def get_npc_result_cost(program: BlockGenerator, npc_result: NPCResult, cost_per_byte: int) -> int:
-    try:
-        # Chia > 1.2.11
-        return npc_result.cost
-    except AttributeError:
-        # Chia 1.2.11
-        from chia.consensus.cost_calculator import calculate_cost_of_program
-
-        return calculate_cost_of_program(program.program, npc_result, cost_per_byte)
-
-
 # Streamable objects can be in either bytes or JSON and we'll take them via CLI or file
 def streamable_load(cls: Any, inputs: Iterable[Any]) -> List[Any]:
     # If we're receiving a group of objects rather than strings to parse, we're going to return them back as a list
@@ -313,7 +301,7 @@ def do_inspect_coin_spend_cmd(
                 npc_result: NPCResult = get_name_puzzle_conditions(
                     program, INFINITE_COST, cost_per_byte=cost_per_byte, mempool_mode=True
                 )
-                cost: int = get_npc_result_cost(program.program, npc_result, cost_per_byte)
+                cost: int = npc_result.cost
                 print(f"Cost: {cost}")
 
     return coin_spend_objs
@@ -400,7 +388,7 @@ def do_inspect_spend_bundle_cmd(
                         cost_per_byte=kwargs["cost_per_byte"],
                         mempool_mode=True,
                     )
-                    cost: int = get_npc_result_cost(program.program, npc_result, kwargs["cost_per_byte"])
+                    cost: int = npc_result.cost
                     print(f"Cost: {cost}")
             if kwargs["debug"]:
                 print("")
@@ -439,8 +427,8 @@ def do_inspect_spend_bundle_cmd(
                                 else:
                                     pkm_dict[str(pk)] = [msg]
                 # This very deliberately prints identical messages multiple times
-                for pk, msgs in pkm_dict.items():
-                    print(f"{pk}:")
+                for pk_str, msgs in pkm_dict.items():
+                    print(f"{pk_str}:")
                     for msg in msgs:
                         print(f"\t- {msg.hex()}")
 
