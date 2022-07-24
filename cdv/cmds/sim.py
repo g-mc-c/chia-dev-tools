@@ -10,6 +10,7 @@ from cdv.cmds.sim_utils import (
     execute_with_simulator,
     farm_blocks,
     print_status,
+    revert_block_height,
     set_auto_farm,
 )
 
@@ -65,7 +66,6 @@ def create_simulator_config(
 ) -> None:
     print(f"Using this Directory: {ctx.obj['root_path']}\n")
     asyncio.run(async_config_wizard(ctx.obj["root_path"], fingerprint, reward_address, plot_directory, auto_farm))
-    pass
 
 
 @sim_cmd.command("start", short_help="Start service groups")
@@ -127,13 +127,45 @@ def status_cmd(
 
 
 @sim_cmd.command("revert", short_help="Reset chain to a previous block height.")
-@click.option("-b", "--blocks", type=int, default=1, help="Number of blocks to delete.")
+@click.option("-b", "--blocks", type=int, default=1, help="Number of blocks to go back.")
+@click.option("-n", "--new_blocks", type=int, default=1, help="Number of new blocks to add during a reorg.")
 @click.option("-r", "--reset", is_flag=True, type=bool, help="Reset the chain to the genesis block")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    type=bool,
+    help="Forcefully delete blocks, this is not a reorg but might be needed in very special circumstances."
+    "  Note: Use with caution, this will break all wallets.",
+)
+@click.option(
+    "-d", "--disable_prompt", is_flag=True, type=bool, help="Disable confirmation prompt when force reverting."
+)
 @click.pass_context
-def revert_cmd(ctx: click.Context, blocks: int, reset: bool) -> None:
-    # TODO: Requires new rpc's to be implemented
-    raise ValueError("This command is not yet implemented.")
-    pass
+def revert_cmd(
+    ctx: click.Context, blocks: int, new_blocks: int, reset: bool, force: bool, disable_prompt: bool
+) -> None:
+    if force and not disable_prompt:
+        input_str = (
+            "Are you sure you want to force delete blocks? This should only ever be used in special circumstances,"
+            " and will break all wallets. \nPress 'y' to continue, or any other button to exit: "
+        )
+        if input(input_str) != "y":
+            return
+    if reset and blocks != 1:
+        print("\nBlocks, '-b' must not be set if all blocks are selected by reset, '-r'. Exiting.\n")
+        return
+    asyncio.run(
+        execute_with_simulator(
+            ctx.obj["rpc_port"],
+            ctx.obj["root_path"],
+            revert_block_height,
+            blocks,
+            new_blocks,
+            reset,
+            force,
+        )
+    )
 
 
 @sim_cmd.command("farm", short_help="Farm blocks")
@@ -158,10 +190,7 @@ def farm_cmd(ctx: click.Context, blocks: int, transaction: bool, target_address:
 @click.argument("set_autofarm", type=click.Choice(["on", "off"]), nargs=1, required=True)
 @click.pass_context
 def autofarm_cmd(ctx: click.Context, set_autofarm: str) -> None:
-    if set_autofarm == "on":
-        autofarm = True
-    else:
-        autofarm = False
+    autofarm = bool(set_autofarm == "on")
     asyncio.run(
         execute_with_simulator(
             ctx.obj["rpc_port"],

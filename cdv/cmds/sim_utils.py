@@ -360,6 +360,31 @@ async def print_status(
         await print_coin_records(config, node_client, include_reward_coins)
 
 
+async def revert_block_height(
+    node_client: SimulatorFullNodeRpcClient,
+    _: Dict,
+    num_blocks: int,
+    num_new_blocks: int,
+    reset_chain_to_genesis: bool,
+    use_revert_blocks: bool,
+) -> None:
+    if use_revert_blocks:
+        if num_new_blocks != 1:
+            print(f"Ignoring num_new_blocks: {num_new_blocks}, because we are not performing a reorg.")
+        # in this case num_blocks is the number of blocks to delete
+        new_height: int = await node_client.revert_blocks(num_blocks, reset_chain_to_genesis)
+        print(
+            f"All transactions in Block: {new_height+num_blocks} and above were successfully deleted, "
+            "you should now delete & restart all wallets."
+        )
+    else:
+        # However, in this case num_blocks is the fork height.
+        new_height = await node_client.reorg_blocks(num_blocks, num_new_blocks, use_revert_blocks)
+        old_height = new_height - num_new_blocks
+        print(f"All transactions in Block: {old_height-num_blocks} and above were successfully reverted.")
+    print(f"Block Height is now: {new_height}")
+
+
 async def farm_blocks(
     node_client: SimulatorFullNodeRpcClient,
     config: Dict,
