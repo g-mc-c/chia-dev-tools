@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from blspy import PrivateKey
 from chia.consensus.coinbase import create_puzzlehash_for_pk
-from chia.simulator.SimulatorFullNodeRpcClient import SimulatorFullNodeRpcClient
+from chia.simulator.simulator_full_node_rpc_client import SimulatorFullNodeRpcClient
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.types.coin_record import CoinRecord
 from chia.util.bech32m import decode_puzzle_hash, encode_puzzle_hash
